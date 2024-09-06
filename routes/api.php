@@ -7,6 +7,8 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ItemTypeController;
 use App\Http\Controllers\BannerController;
 use App\Http\Controllers\AddressController;
+use App\Http\Controllers\UnitController;
+use App\Http\Controllers\ModeController;
 
 
 
@@ -78,5 +80,19 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/banners', [BannerController::class, 'store']); // Admin only
     Route::get('/banners', [BannerController::class, 'index']); //Admin only
+
+    //UNITS
+    Route::get('/units', [UnitController::class, 'index']);
+    Route::get('/units/{id}', [UnitController::class, 'show']);
+    Route::post('/units', [UnitController::class, 'store']);
+    Route::put('/units/{id}', [UnitController::class, 'update']);
+    Route::delete('/units/{id}', [UnitController::class, 'destroy']);
+
+    //MODES
+    Route::get('/modes', [ModeController::class, 'index']);
+    Route::get('/modes/{id}', [ModeController::class, 'show']);
+    Route::post('/modes', [ModeController::class, 'store']);
+    Route::put('/modes/{id}', [ModeController::class, 'update']);
+    Route::delete('/modes/{id}', [ModeController::class, 'destroy']);
 });
 
