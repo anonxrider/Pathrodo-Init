@@ -6,6 +6,8 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ItemTypeController;
 use App\Http\Controllers\BannerController;
+use App\Http\Controllers\AddressController;
+
 
 
 /*
@@ -62,6 +64,12 @@ Route::post('/my-profile', [AuthController::class, 'getProfile'])->middleware('a
 Route::put('/update-profile', [AuthController::class, 'updateProfile'])->middleware('auth:sanctum');
 
 Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/addresses', [AddressController::class, 'index']); // Get all user addresses
+    Route::post('/addresses', [AddressController::class, 'store']); // Create an address
+    Route::put('/addresses/{address}', [AddressController::class, 'update']); // Update an address
+    Route::delete('/addresses/{address}', [AddressController::class, 'destroy']); // Delete an address
+
+
     Route::post('/categories', [CategoryController::class, 'store']); // Admin only
     Route::put('/categories/{id}', [CategoryController::class, 'update']); // Admin only
     Route::delete('/categories/{id}', [CategoryController::class, 'destroy']); // Admin only
