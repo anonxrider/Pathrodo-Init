@@ -33,6 +33,8 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
 Route::get('/categories', [CategoryController::class, 'index']);
+Route::get('/categories/{id}', [CategoryController::class, 'show']);
+
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
 Route::post('/my-profile', [AuthController::class, 'getProfile'])->middleware('auth:sanctum');
 Route::put('/update-profile', [AuthController::class, 'updateProfile'])->middleware('auth:sanctum');
@@ -40,7 +42,7 @@ Route::put('/update-profile', [AuthController::class, 'updateProfile'])->middlew
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/categories', [CategoryController::class, 'store']); // Admin only
     
-    Route::get('/categories/{id}', [CategoryController::class, 'show']);
+    
     Route::put('/categories/{id}', [CategoryController::class, 'update']); // Admin only
     Route::delete('/categories/{id}', [CategoryController::class, 'destroy']); // Admin only
 });

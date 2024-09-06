@@ -54,6 +54,7 @@ class CategoryController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255|unique:categories,name,' . $id,
+            'description' => 'nullable|string|max:65535',
         ]);
 
         $category = Category::find($id);
@@ -63,6 +64,7 @@ class CategoryController extends Controller
         }
 
         $category->name = $request->name;
+        $category->description = $request->description; // Update the description
         $category->save();
 
         return response()->json([
