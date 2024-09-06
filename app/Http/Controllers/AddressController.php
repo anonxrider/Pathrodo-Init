@@ -72,6 +72,7 @@ class AddressController extends Controller
     // Update an existing address
     public function update(Request $request, Address $address)
     {
+        // Validate the request
         $request->validate([
             'street' => 'sometimes|required|string|max:255',
             'city' => 'sometimes|required|string|max:255',
@@ -82,6 +83,23 @@ class AddressController extends Controller
             'is_shipping' => 'boolean',
         ]);
 
+        // Check for duplicate address, but exclude the current address being updated
+        $existingAddress = Address::where('user_id', $request->user()->id)
+            ->where('street', $request->street ?? $address->street)
+            ->where('city', $request->city ?? $address->city)
+            ->where('state', $request->state ?? $address->state)
+            ->where('country', $request->country ?? $address->country)
+            ->where('postal_code', $request->postal_code ?? $address->postal_code)
+            ->where('id', '!=', $address->id) // Exclude the current address being updated
+            ->first();
+
+        if ($existingAddress) {
+            return response()->json([
+                'message' => 'This address already exists.'
+            ], 409); // HTTP status code 409 for conflict
+        }
+
+        // Update the address
         $address->update($request->all());
 
         return response()->json([
@@ -90,13 +108,23 @@ class AddressController extends Controller
         ]);
     }
 
-    // Delete an address
-    public function destroy(Address $address)
+    public function destroy($id)
     {
-        $address->delete();
-
-        return response()->json([
-            'message' => 'Address deleted successfully'
-        ]);
+        try {
+            // Find the address by ID or throw a ModelNotFoundException
+            $address = Address::findOrFail($id);
+    
+            // Delete the address
+            $address->delete();
+    
+            return response()->json([
+                'message' => 'Address deleted successfully'
+            ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'message' => 'Address not found.'
+            ], 404); // HTTP status code 404 for not found
+        }
     }
+    
 }
