@@ -26,11 +26,12 @@ class AuthController extends Controller
         ]);
 
         // Create token for the registered user
-        $token = $user->createToken('API Token')->plainTextToken;
+        //$token = $user->createToken('API Token')->plainTextToken;
 
         return response()->json([
             'user' => $user,
-            'token' => $token
+            'message' => 'User registered sucessfully'
+            //'token' => $token
         ], 201);
     }
 
