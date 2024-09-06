@@ -37,6 +37,9 @@ Route::post('/register', [AuthController::class, 'register']);
 //LOGIN API
 Route::post('/login', [AuthController::class, 'login']);
 
+//GET ACTIVE BANNERS
+Route::get('/active-home-banners', [BannerController::class, 'homeActiveBanners']);
+
 //LIST ALL CATEGORIES
 Route::get('/categories', [CategoryController::class, 'index']);
 
@@ -66,5 +69,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/item-types', [ItemTypeController::class, 'store']); // Admin only
 
     Route::post('/banners', [BannerController::class, 'store']); // Admin only
+    Route::get('/banners', [BannerController::class, 'index']); //Admin only
 });
 
