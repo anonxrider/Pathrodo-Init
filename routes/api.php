@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ItemTypeController;
+use App\Http\Controllers\BannerController;
 
 
 /*
@@ -63,5 +64,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/categories/{id}', [CategoryController::class, 'destroy']); // Admin only
 
     Route::post('/item-types', [ItemTypeController::class, 'store']); // Admin only
+
+    Route::post('/banners', [BannerController::class, 'store']); // Admin only
 });
 

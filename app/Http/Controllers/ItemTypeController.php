@@ -39,15 +39,16 @@ class ItemTypeController extends Controller
             'code' => 'required|string|max:255|unique:item_types,code'
         ]);
 
+        // Convert item_type and code to uppercase
         $item_type = ItemType::create([
-            'item_type' => $request->item_type,
-            'code' => $request->code,
-            
+            'item_type' => strtoupper($request->item_type), // Convert to uppercase
+            'code' => strtoupper($request->code), // Convert to uppercase
         ]);
 
         return response()->json([
             'message' => 'Item Type created successfully',
-            'item type' => $item_type
+            'item_type' => $item_type
         ], 201);
     }
+
 }
