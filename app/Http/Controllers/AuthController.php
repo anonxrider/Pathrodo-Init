@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use App\Models\User; // Add this line to import the User model
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Mail;
 class AuthController extends Controller
 {
     //REGISTER ADMIN OR USER
@@ -15,7 +17,7 @@ class AuthController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8',
-            'role' => 'required|string|in:user,admin'  // Ensure valid role
+            'role' => 'required|string|in:user,admin'
         ]);
 
         $user = User::create([
@@ -25,16 +27,26 @@ class AuthController extends Controller
             'role' => $request->role,
         ]);
 
-        // Create token for the registered user
-        //$token = $user->createToken('API Token')->plainTextToken;
+        // Generate a 6-digit OTP
+        $otp = rand(10000000, 99999999);
+
+        // Store OTP and expiration time
+        $user->email_otp = $otp;
+        $user->email_otp_expires_at = Carbon::now()->addMinutes(10); // OTP expires in 10 minutes
+        $user->save();
+
+        // Send OTP via email
+        Mail::raw("Your verification OTP is: $otp", function ($message) use ($user) {
+            $message->to($user->email)
+                ->subject('Verify Your Email Address');
+        });
 
         return response()->json([
-            'user' => $user,
-            'message' => 'User registered sucessfully'
-            //'token' => $token
+            'message' => 'User registered successfully. Please check your email for the OTP.'
         ], 201);
     }
 
+    
     // Login Method
     public function login(Request $request)
     {
@@ -51,7 +63,11 @@ class AuthController extends Controller
             ]);
         }
 
-        // Create token for the logged-in user
+        if (!$user->email_verified_at) {
+            return response()->json(['message' => 'Please verify your email before logging in.'], 403);
+        }
+
+        // Generate token
         $token = $user->createToken('API Token')->plainTextToken;
 
         return response()->json([

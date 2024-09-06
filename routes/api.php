@@ -35,6 +35,10 @@ use App\Http\Controllers\ModeController;
 //     // Admin routes
 // });
 
+Route::post('/email/verify-otp', [VerificationController::class, 'verifyOtp']);
+Route::post('/email/resend-otp', [VerificationController::class, 'resendOtp']);
+
+
 //REGISTER API
 Route::post('/register', [AuthController::class, 'register']);
 
