@@ -11,6 +11,34 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Auth;
 class AuthController extends Controller
 {
+    // Forgot Password Request
+    public function forgotPassword(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|string|email|exists:users,email',
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+
+        // Generate a 6-digit OTP
+        $otp = rand(10000000, 99999999);
+
+        // Store OTP and expiration time
+        $user->password_reset_otp = $otp;
+        $user->password_reset_otp_expires_at = Carbon::now()->addMinutes(10); // OTP expires in 10 minutes
+        $user->save();
+
+        // Send OTP via email
+        Mail::raw("Your password reset OTP is: $otp", function ($message) use ($user) {
+            $message->to($user->email)
+                ->subject('Password Reset OTP');
+        });
+
+        return response()->json([
+            'message' => 'OTP sent to your email. Please use it to reset your password.'
+        ], 200);
+    }
+
     //CHECK USER IS AUTHENTICATED OR NOT AUTHENTICATED
     public function getUser(Request $request)
     {
@@ -72,7 +100,6 @@ class AuthController extends Controller
     }
 
     
-    // Login Method
     public function login(Request $request)
     {
         $request->validate([
@@ -80,16 +107,31 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
 
+        // Find the user by email
         $user = User::where('email', $request->email)->first();
 
-        if (! $user || ! Hash::check($request->password, $user->password)) {
-            throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect.'],
-            ]);
+        // Check if the user exists
+        if (!$user) {
+            return response()->json([
+                'status_message'=>'failed',
+                'message' => 'User with the provided email does not exist.'
+            ], 404);
         }
 
+        // Check if the password is correct
+        if (!Hash::check($request->password, $user->password)) {
+            return response()->json([
+                'status_message'=>'failed',
+                'message' => 'The provided credentials are incorrect.'
+            ], 401);
+        }
+
+        // Check if the email is verified
         if (!$user->email_verified_at) {
-            return response()->json(['message' => 'Please verify your email before logging in.'], 403);
+            return response()->json([
+                'status_message'=>'failed',
+                'message' => 'Please verify your email before logging in.'
+            ], 403);
         }
 
         // Generate token
@@ -100,6 +142,7 @@ class AuthController extends Controller
             'token' => $token
         ], 200);
     }
+
 
     // Logout Method
     public function logout(Request $request)

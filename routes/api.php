@@ -37,9 +37,12 @@ use App\Http\Controllers\VerificationController;
 //     // Admin routes
 // });
 
+//EMAIL ACTIVATE
 Route::post('/email/verify-otp', [VerificationController::class, 'verifyOtp']);
 Route::post('/email/resend-otp', [VerificationController::class, 'resendOtp']);
 
+//FORGET PASSWORD EMAIL OTP SEND
+Route::post('/forget-password', [AuthController::class, 'forgotPassword']);
 
 
 //REGISTER API
