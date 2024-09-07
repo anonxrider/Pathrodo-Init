@@ -73,7 +73,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanc
 Route::post('/my-profile', [AuthController::class, 'getProfile'])->middleware('auth:sanctum');
 
 //EDIT OR UPDATE PROFILE
-Route::put('/update-profile', [AuthController::class, 'updateProfile'])->middleware('auth:sanctum');
+Route::post('/update-profile', [AuthController::class, 'updateProfile'])->middleware('auth:sanctum');
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/addresses', [AddressController::class, 'index']); // Get all user addresses
@@ -109,4 +109,3 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/check-user', [AuthController::class, 'getUser']);
 
 });
-
