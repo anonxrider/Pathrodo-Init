@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use App\Models\User;
-
+use Illuminate\Support\Facades\Mail;
 class VerificationController extends Controller
 {
     // Verify the OTP
@@ -36,30 +36,56 @@ class VerificationController extends Controller
 
         return response()->json(['message' => 'Invalid or expired OTP.'], 400);
     }
-    public function resendOtp(Request $request)
-    {
-        $request->validate([
-            'email' => 'required|string|email',
-        ]);
 
-        $user = User::where('email', $request->email)->first();
-
-        if (!$user) {
-            return response()->json(['message' => 'User not found.'], 404);
+        // Resend OTP with throttling
+        public function resendOtp(Request $request)
+        {
+            $request->validate([
+                'email' => 'required|string|email',
+            ]);
+    
+            $user = User::where('email', $request->email)->first();
+    
+            if (!$user) {
+                return response()->json(['message' => 'User not found.'], 404);
+            }
+    
+            // Check if the user has exceeded the allowed resend attempts
+            if ($user->otp_resend_attempts >= 3) {
+                // Check if 15 minutes have passed since the last resend
+                $lastResend = Carbon::parse($user->last_otp_resend_at);
+                if (Carbon::now()->diffInMinutes($lastResend) < 15) {
+                    $minutesLeft = 15 - Carbon::now()->diffInMinutes($lastResend);
+                    return response()->json([
+                        'message' => "You've reached the resend limit. Please try again in $minutesLeft minutes."
+                    ], 429);
+                } else {
+                    // Reset the attempts after 15 minutes
+                    $user->otp_resend_attempts = 0;
+                }
+            }
+    
+            // Generate a new OTP
+            $otp = rand(100000, 999999);
+            $user->email_otp = $otp;
+            $user->email_otp_expires_at = Carbon::now()->addMinutes(10);
+    
+            // Update resend attempts and the last resend time
+            $user->otp_resend_attempts += 1;
+            $user->last_otp_resend_at = Carbon::now();
+            $user->save();
+    
+            // Send OTP via email
+            Mail::raw("Your new OTP is: $otp", function ($message) use ($user) {
+                $message->to($user->email)
+                    ->subject('Resend OTP for Email Verification');
+            });
+    
+            return response()->json([
+                'message' => 'OTP resent successfully.',
+                'attempts_left' => 3 - $user->otp_resend_attempts
+            ], 200);
         }
 
-        // Generate a new OTP
-        $otp = rand(100000, 999999);
-        $user->email_otp = $otp;
-        $user->email_otp_expires_at = Carbon::now()->addMinutes(10);
-        $user->save();
 
-        // Send OTP via email
-        Mail::raw("Your new OTP is: $otp", function ($message) use ($user) {
-            $message->to($user->email)
-                ->subject('Resend OTP for Email Verification');
-        });
-
-        return response()->json(['message' => 'OTP resent successfully.'], 200);
-    }
 }
