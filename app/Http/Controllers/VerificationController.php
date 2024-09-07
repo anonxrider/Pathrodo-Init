@@ -31,7 +31,13 @@ class VerificationController extends Controller
             $user->email_otp_expires_at = null;
             $user->save();
 
-            return response()->json(['message' => 'Email verified successfully.'], 200);
+            // Generate a token (assuming you're using Laravel Sanctum)
+            $token = $user->createToken('authToken')->plainTextToken;
+
+            return response()->json([
+                'message' => 'Email verified successfully.',
+                'token' => $token
+            ], 200);
         }
 
         return response()->json(['message' => 'Invalid or expired OTP.'], 400);
@@ -66,7 +72,7 @@ class VerificationController extends Controller
             }
     
             // Generate a new OTP
-            $otp = rand(100000, 999999);
+            $otp = rand(10000000, 99999999);
             $user->email_otp = $otp;
             $user->email_otp_expires_at = Carbon::now()->addMinutes(10);
     
