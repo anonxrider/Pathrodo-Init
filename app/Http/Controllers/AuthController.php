@@ -99,7 +99,7 @@ class AuthController extends Controller
         ], 201);
     }
 
-    
+    //Logout
     public function login(Request $request)
     {
         $request->validate([
@@ -142,7 +142,6 @@ class AuthController extends Controller
             'token' => $token
         ], 200);
     }
-
 
     // Logout Method
     public function logout(Request $request)

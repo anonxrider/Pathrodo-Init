@@ -51,18 +51,16 @@ class BannerController extends Controller
     // Get all active banners (Public access)
     public function homeActiveBanners()
     {
-        // Get banners where status is 1
-        $banners = Banner::where('status', 1)->get();
+        // Get banners where status is 1 and select only the image_url
+        $banners = Banner::where('status', 1)->pluck('image_url');
 
         // Append full image URL to each banner
-        $banners->transform(function($banner) {
-            $banner->image_url = Storage::url($banner->image_url); // Generate full image URL
-            return $banner;
+        $banners = $banners->map(function($image_url) {
+            return Storage::url($image_url); // Generate full image URL
         });
 
         return response()->json($banners);
     }
-
     //Get all banners active and non active
     public function index()
     {
