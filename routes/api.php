@@ -41,6 +41,7 @@ Route::post('/email/verify-otp', [VerificationController::class, 'verifyOtp']);
 Route::post('/email/resend-otp', [VerificationController::class, 'resendOtp']);
 
 
+
 //REGISTER API
 Route::post('/register', [AuthController::class, 'register']);
 
@@ -100,5 +101,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/modes', [ModeController::class, 'store']);
     Route::put('/modes/{id}', [ModeController::class, 'update']);
     Route::delete('/modes/{id}', [ModeController::class, 'destroy']);
+
+    //CHECK USER
+    Route::get('/check-user', [AuthController::class, 'getUser']);
+
 });
 

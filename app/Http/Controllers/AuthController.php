@@ -8,8 +8,33 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Auth;
 class AuthController extends Controller
 {
+    //CHECK USER IS AUTHENTICATED OR NOT AUTHENTICATED
+    public function getUser(Request $request)
+    {
+        // Check if the user is authenticated
+        if (Auth::check()) {
+            // Get the authenticated user
+            $user = Auth::user();
+            
+            // Return only email and name as JSON
+            return response()->json([
+                'success' => true,
+                'user' => [
+                    'name' => $user->name,
+                    'email' => $user->email,
+                ]
+            ]);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not authenticated'
+            ], 401);
+        }
+    }
+
     //REGISTER ADMIN OR USER
     public function register(Request $request)
     {
