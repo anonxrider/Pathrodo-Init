@@ -57,7 +57,7 @@ Route::get('/active-home-banners', [BannerController::class, 'homeActiveBanners'
 //LIST ALL CATEGORIES
 Route::get('/categories', [CategoryController::class, 'index']);
 
-//LIST ALL CATEGORIES
+//LIST ALL Item Types
 Route::get('/item-types', [ItemTypeController::class, 'index']);
 
 //GET A CATEGORY BY CATEGORY ID

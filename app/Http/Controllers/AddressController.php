@@ -66,8 +66,17 @@ class AddressController extends Controller
     {
         $addresses = $request->user()->addresses;
 
-        return response()->json($addresses);
+        // Check if the user has no addresses
+        if ($addresses->isEmpty()) {
+            return response()->json([
+                'status_message' => 'failed',
+                'message' => 'No addresses found for this user.'
+            ], 404); // HTTP status code 404 for not found
+        }
+
+        return response()->json($addresses, 200);
     }
+
 
     // Update an existing address
     public function update(Request $request, Address $address)

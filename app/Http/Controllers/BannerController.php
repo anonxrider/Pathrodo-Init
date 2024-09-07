@@ -61,6 +61,7 @@ class BannerController extends Controller
 
         return response()->json($banners);
     }
+    
     //Get all banners active and non active
     public function index()
     {
