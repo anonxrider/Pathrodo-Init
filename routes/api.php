@@ -78,13 +78,19 @@ Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanc
 //MY PROFILE
 Route::post('/my-profile', [AuthController::class, 'getProfile'])->middleware('auth:sanctum');
 
+//CHANGE PASSWORD
+Route::middleware('auth:sanctum')->post('/change-password', [AuthController::class, 'changePassword']);
+
 //EDIT OR UPDATE PROFILE
 Route::post('/update-profile', [AuthController::class, 'updateProfile'])->middleware('auth:sanctum');
+
+//UPDATE OR CHANGE EMAIL
+// Route::post('/update-email', [AuthController::class, 'updateEmail'])->middleware('auth:sanctum');
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/addresses', [AddressController::class, 'index']); // Get all user addresses
     Route::post('/addresses', [AddressController::class, 'store']); // Create an address
-    Route::put('/addresses/{address}', [AddressController::class, 'update']); // Update an address
+    Route::post('/addresses/{address}', [AddressController::class, 'update']); // Update an address
     Route::delete('/addresses/{address}', [AddressController::class, 'destroy']); // Delete an address
 
 

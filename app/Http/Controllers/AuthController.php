@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Auth;
 use App\Rules\ValidEmail;
 use App\Rules\ValidName;
+use Illuminate\Support\Facades\Storage;
+
 class AuthController extends Controller
 {
     // Forgot Password Request
@@ -70,12 +72,34 @@ class AuthController extends Controller
     public function registerAdmin(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8',
-            //'role' => 'required|string|in:user,admin'
-            'role' => 'required|string|in:admin'
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                'regex:/^[^\d\s][^\d]*$/', // Ensure name does not contain digits and does not start with a space
+                new ValidName(), 
+            ],
+            'email' => [
+                'required',
+                'string',
+                'email',
+                'max:255',
+                'unique:users',
+                new ValidEmail(),
+            ],
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+            ],
+            'role' => [
+                'required',
+                'string',
+                'in:admin',
+            ],
         ]);
+        
+        
 
         $user = User::create([
             'name' => $request->name,
@@ -84,6 +108,8 @@ class AuthController extends Controller
             'role' => $request->role,
         ]);
 
+        $user_name = $request->name;
+        $uppercase_name = strtoupper($request->name);
         // Generate a 6-digit OTP
         $otp = rand(10000000, 99999999);
 
@@ -93,7 +119,7 @@ class AuthController extends Controller
         $user->save();
 
         // Send OTP via email
-        Mail::raw("Your verification OTP is: $otp", function ($message) use ($user) {
+        Mail::raw("Hi $uppercase_name,\n\nYour verification OTP is: $otp", function ($message) use ($user) {
             $message->to($user->email)
                 ->subject('Verify Your Email Address');
         });
@@ -270,47 +296,104 @@ class AuthController extends Controller
         return response()->json(['message' => 'Logged out successfully'], 200);
     }
 
-    //Get Profile
+    // Get Profile
     public function getProfile(Request $request)
     {
+        $user = $request->user();
+        
+        // Select only the required fields
+        $profile = [
+            'name' => $user->name,
+            'email' => $user->email,
+            'phone_number' => $user->phone_number ?? 'not available', // Replace null with 'not available'
+            'profile_pic' => $user->profile_pic ?? 'not available', 
+            'email_verified' => $user->email_verified_at ? true : false,
+            'email_verified_time' => $user->email_verified_at
+            //'role' => $user->role 
+        ];
+
         return response()->json([
-            'user' => $request->user() // returns the authenticated user's details
+            'user' => $profile
         ], 200);
     }
 
-    //Update Profile
+    
+    // Update Profile
     public function updateProfile(Request $request)
     {
         // Validate input
         $request->validate([
             'name' => 'sometimes|string|max:255',
-            'email' => 'sometimes|string|email|max:255|unique:users,email,' . $request->user()->id,
             'password' => 'sometimes|string|min:8|confirmed',
+            'phone_number' => 'sometimes|nullable|string|regex:/^\+?[1-9]\d{1,14}$/', // Example: international phone number validation
+            'profile_pic' => 'sometimes|nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Example: image validation
         ]);
-
+    
         // Get the authenticated user
         $user = $request->user();
-
+    
         // Update the user's information
         if ($request->has('name')) {
             $user->name = $request->name;
         }
         
-        if ($request->has('email')) {
-            $user->email = $request->email;
-        }
-        
         if ($request->has('password')) {
             $user->password = Hash::make($request->password);
         }
-
+        
+        if ($request->has('phone_number')) {
+            $user->phone_number = $request->phone_number;
+        }
+    
+        if ($request->hasFile('profile_pic')) {
+            // Handle file upload
+            $file = $request->file('profile_pic');
+            $path = $file->store('profile_pics', 'public'); // Store file in 'public/profile_pics' directory
+            $user->profile_pic = $path;
+        }
+    
         // Save the updates
+        $user->save();
+    
+        // Return only specific fields
+        $profile = [
+            'name' => $user->name,
+            'email' => $user->email, // Email remains unchanged
+            'phone_number' => $user->phone_number,
+            'profile_pic' => $user->profile_pic ? Storage::url($user->profile_pic) : 'not available', // Provide URL if available
+        ];
+    
+        return response()->json([
+            'message' => 'Profile updated successfully',
+            'user' => $profile
+        ], 200);
+    }
+   
+    //CHANGE PASSWORD
+    public function changePassword(Request $request)
+    {
+        // Validate the request
+        $request->validate([
+            'current_password' => 'required|string',
+            'new_password' => 'required|string|min:8|confirmed',
+        ]);
+
+        // Get the authenticated user
+        $user = Auth::user();
+
+        // Check if the current password matches
+        if (!Hash::check($request->current_password, $user->password)) {
+            return response()->json([
+                'message' => 'Current password is incorrect.'
+            ], 400); // HTTP status code 400 for bad request
+        }
+
+        // Update the password
+        $user->password = Hash::make($request->new_password);
         $user->save();
 
         return response()->json([
-            'message' => 'Profile updated successfully',
-            'user' => $user
-        ], 200);
+            'message' => 'Password updated successfully.'
+        ]);
     }
-
 }

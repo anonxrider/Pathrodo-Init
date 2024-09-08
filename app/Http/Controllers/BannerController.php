@@ -53,14 +53,20 @@ class BannerController extends Controller
     {
         // Get banners where status is 1 and select only the image_url
         $banners = Banner::where('status', 1)->pluck('image_url');
-
+    
+        if ($banners->isEmpty()) {
+            // Return a response indicating no active banners
+            return response()->json(['message' => 'No active banners'], 404);
+        }
+    
         // Append full image URL to each banner
         $banners = $banners->map(function($image_url) {
             return Storage::url($image_url); // Generate full image URL
         });
-
+    
         return response()->json($banners);
     }
+    
     
     //Get all banners active and non active
     public function index()
