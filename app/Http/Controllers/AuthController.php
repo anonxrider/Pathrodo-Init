@@ -10,7 +10,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Auth;
 use App\Rules\ValidEmail;
-
+use App\Rules\ValidName;
 class AuthController extends Controller
 {
     // Forgot Password Request
@@ -112,7 +112,7 @@ class AuthController extends Controller
                 'string',
                 'max:255',
                 'regex:/^[^\d\s][^\d]*$/', // Ensure name does not contain digits and does not start with a space
-                
+                new ValidName(), 
             ],
             'email' => [
                 'required',
