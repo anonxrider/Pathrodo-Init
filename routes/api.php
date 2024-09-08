@@ -48,8 +48,14 @@ Route::post('/forget-password', [AuthController::class, 'forgotPassword']);
 //REGISTER API
 Route::post('/register', [AuthController::class, 'register']);
 
-//LOGIN API
+//REGISTER ADMIN API
+Route::post('/pathrodo-admin', [AuthController::class, 'registerAdmin']);
+
+//LOGIN API PUBLIC
 Route::post('/login', [AuthController::class, 'login']);
+
+//LOGIN ADMIN
+Route::post('/pathrodo-login', [AuthController::class, 'loginAdmin']);
 
 //GET ACTIVE BANNERS
 Route::get('/active-home-banners', [BannerController::class, 'homeActiveBanners']);

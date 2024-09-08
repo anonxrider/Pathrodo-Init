@@ -9,6 +9,8 @@ use Illuminate\Validation\ValidationException;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Auth;
+use App\Rules\ValidEmail;
+
 class AuthController extends Controller
 {
     // Forgot Password Request
@@ -63,14 +65,16 @@ class AuthController extends Controller
         }
     }
 
-    //REGISTER ADMIN OR USER
-    public function register(Request $request)
+    
+    //REGISTER ADMIN
+    public function registerAdmin(Request $request)
     {
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8',
-            'role' => 'required|string|in:user,admin'
+            //'role' => 'required|string|in:user,admin'
+            'role' => 'required|string|in:admin'
         ]);
 
         $user = User::create([
@@ -99,7 +103,68 @@ class AuthController extends Controller
         ], 201);
     }
 
-    //Logout
+    //REGISTER USER
+    public function register(Request $request)
+    {
+        $request->validate([
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                'regex:/^[^\d\s][^\d]*$/', // Ensure name does not contain digits and does not start with a space
+                
+            ],
+            'email' => [
+                'required',
+                'string',
+                'email',
+                'max:255',
+                'unique:users',
+                new ValidEmail(),
+            ],
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+            ],
+            'role' => [
+                'required',
+                'string',
+                'in:user',
+            ],
+        ]);
+        
+        
+
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'role' => $request->role,
+        ]);
+
+        $user_name = $request->name;
+        $uppercase_name = strtoupper($request->name);
+        // Generate a 6-digit OTP
+        $otp = rand(10000000, 99999999);
+
+        // Store OTP and expiration time
+        $user->email_otp = $otp;
+        $user->email_otp_expires_at = Carbon::now()->addMinutes(10); // OTP expires in 10 minutes
+        $user->save();
+
+        // Send OTP via email
+        Mail::raw("Hi $uppercase_name,\n\nYour verification OTP is: $otp", function ($message) use ($user) {
+            $message->to($user->email)
+                ->subject('Verify Your Email Address');
+        });
+
+        return response()->json([
+            'message' => 'User registered successfully. Please check your email for the OTP.'
+        ], 201);
+    }
+
+    //Login PUBLIC
     public function login(Request $request)
     {
         $request->validate([
@@ -140,6 +205,59 @@ class AuthController extends Controller
         return response()->json([
             'user' => $user,
             'token' => $token
+        ], 200);
+    }
+
+    //Admin Login
+    public function loginAdmin(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|string|email',
+            'password' => 'required|string',
+        ]);
+
+        // Find the user by email
+        $user = User::where('email', $request->email)->first();
+
+        // Check if the user exists
+        if (!$user) {
+            return response()->json([
+                'status_message' => 'failed',
+                'message' => 'User with the provided email does not exist.'
+            ], 404);
+        }
+
+        // Check if the password is correct
+        if (!Hash::check($request->password, $user->password)) {
+            return response()->json([
+                'status_message' => 'failed',
+                'message' => 'The provided credentials are incorrect.'
+            ], 401);
+        }
+
+        // Check if the email is verified
+        if (!$user->email_verified_at) {
+            return response()->json([
+                'status_message' => 'failed',
+                'message' => 'Please verify your email before logging in.'
+            ], 403);
+        }
+
+        // Check if the user is an admin
+        if ($user->role !== 'admin') {
+            return response()->json([
+                'status_message' => 'failed',
+                'message' => 'You are not an administrator.'
+            ], 403); // Forbidden response for non-admin users
+        }
+
+        // Generate token for admin
+        $token = $user->createToken('Admin Token')->plainTextToken;
+
+        return response()->json([
+            'user' => $user,
+            'token' => $token,
+            'message' => 'Admin logged in successfully'
         ], 200);
     }
 
