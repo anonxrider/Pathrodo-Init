@@ -12,10 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->string('email_otp')->nullable();
-            $table->string('password_reset_otp')->nullable();
-            $table->timestamp('password_reset_otp_expires_at')->nullable();
-            $table->timestamp('email_otp_expires_at')->nullable();
+            $table->boolean('is_active')->default(true);
         });
     }
 
@@ -25,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn(['email_otp','password_reset_otp','password_reset_otp_expires_at','email_otp_expires_at']);
+            $table->dropColumn('is_active');
         });
     }
 };

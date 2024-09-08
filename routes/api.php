@@ -44,6 +44,8 @@ Route::post('/email/resend-otp', [VerificationController::class, 'resendOtp']);
 //FORGET PASSWORD EMAIL OTP SEND
 Route::post('/forget-password', [AuthController::class, 'forgotPassword']);
 
+// Route to reset the password using OTP
+Route::post('reset-password', [AuthController::class, 'resetPassword']);
 
 //REGISTER API
 Route::post('/register', [AuthController::class, 'register']);
@@ -74,6 +76,12 @@ Route::get('/item-type/{id}', [ItemTypeController::class, 'show']);
 
 //LOGOUT
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+
+// Route to deactivate the user account
+Route::post('/deactivate-account', [AuthController::class, 'deactivateAccount'])->middleware('auth:sanctum');
+
+// Route to delete the user account
+Route::post('/delete-account', [AuthController::class, 'deleteAccount'])->middleware('auth:sanctum');
 
 //MY PROFILE
 Route::post('/my-profile', [AuthController::class, 'getProfile'])->middleware('auth:sanctum');

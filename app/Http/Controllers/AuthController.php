@@ -15,31 +15,69 @@ use Illuminate\Support\Facades\Storage;
 
 class AuthController extends Controller
 {
-    // Forgot Password Request
+    //FORGET PASSWORD EMAIL SENT OTP
     public function forgotPassword(Request $request)
     {
         $request->validate([
             'email' => 'required|string|email|exists:users,email',
         ]);
-
+    
         $user = User::where('email', $request->email)->first();
-
+    
+        // Check if the OTP request count exceeds 3
+        if ($user->otp_requests_count >= 3) {
+            return response()->json([
+                'message' => 'You have exceeded the maximum number of OTP requests. Please try again later.'
+            ], 429);
+        }
+    
         // Generate a 6-digit OTP
-        $otp = rand(10000000, 99999999);
-
+        $otp = rand(100000, 999999);
+    
         // Store OTP and expiration time
         $user->password_reset_otp = $otp;
         $user->password_reset_otp_expires_at = Carbon::now()->addMinutes(10); // OTP expires in 10 minutes
+        $user->otp_requests_count += 1; // Increment OTP request count
         $user->save();
-
+    
         // Send OTP via email
         Mail::raw("Your password reset OTP is: $otp", function ($message) use ($user) {
             $message->to($user->email)
                 ->subject('Password Reset OTP');
         });
-
+    
         return response()->json([
             'message' => 'OTP sent to your email. Please use it to reset your password.'
+        ], 200);
+    }
+
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|string|email|exists:users,email',
+            'otp' => 'required|integer',
+            'new_password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+
+        // Check OTP validity
+        if ($user->password_reset_otp !== $request->otp ||
+            Carbon::now()->greaterThan($user->password_reset_otp_expires_at)) {
+            return response()->json([
+                'message' => 'Invalid or expired OTP.'
+            ], 400);
+        }
+
+        // Update password
+        $user->password = bcrypt($request->new_password);
+        $user->password_reset_otp = null; // Clear OTP
+        $user->password_reset_otp_expires_at = null; // Clear OTP expiration time
+        $user->otp_requests_count = 0; // Reset OTP request count
+        $user->save();
+
+        return response()->json([
+            'message' => 'Password has been reset successfully.'
         ], 200);
     }
 
@@ -395,5 +433,34 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'Password updated successfully.'
         ]);
+    }
+
+    //Deactivate Account
+    public function deactivateAccount()
+    {
+        $user = Auth::user();
+
+        // Deactivate the account (example: set a status flag)
+        $user->is_active = false; // Add this column to your users table if needed
+        $user->save();
+
+        return response()->json([
+            'message' => 'Account has been deactivated successfully.'
+        ], 200);
+    }
+
+    //Delete Account
+    public function deleteAccount()
+    {
+        $user = Auth::user();
+
+        // Optionally, you might want to handle related data deletion here
+
+        // Delete the user's account
+        $user->delete();
+
+        return response()->json([
+            'message' => 'Account has been deleted successfully.'
+        ], 200);
     }
 }
