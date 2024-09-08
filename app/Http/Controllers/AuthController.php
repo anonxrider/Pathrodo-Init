@@ -338,15 +338,15 @@ class AuthController extends Controller
     public function getProfile(Request $request)
     {
         $user = $request->user();
-        
+
         // Select only the required fields
         $profile = [
             'name' => $user->name,
             'email' => $user->email,
             'phone_number' => $user->phone_number ?? 'not available', // Replace null with 'not available'
-            'profile_pic' => $user->profile_pic ?? 'not available', 
-            'email_verified' => $user->email_verified_at ? true : false,
-            'email_verified_time' => $user->email_verified_at
+            'profile_pic' => $user->profile_pic ?? 'not available',  // Replace null with 'not available'
+            'email_verified' => !is_null($user->email_verified_at),   // Check if email is verified
+            'email_verified_time' => $user->email_verified_at ? $user->email_verified_at->toIso8601String() : 'not verified',
             //'role' => $user->role 
         ];
 
@@ -354,6 +354,7 @@ class AuthController extends Controller
             'user' => $profile
         ], 200);
     }
+
 
     
     // Update Profile
