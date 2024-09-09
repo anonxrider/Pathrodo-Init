@@ -37,10 +37,12 @@ class CategoryController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255|unique:categories',
+            'description' => 'required|string|max:255',
         ]);
 
         $category = Category::create([
             'name' => $request->name,
+            'description' => $request->description
         ]);
 
         return response()->json([
